@@ -15,7 +15,7 @@ class NumberNode extends Node {
 
     @Override
     List<String> generateCode() {
-        return List.of("mov eax, " + value);
+        return new ArrayList<>(List.of("mov eax, " + value));
     }
 }
 
@@ -29,7 +29,7 @@ class VariableNode extends Node {
 
     @Override
     List<String> generateCode() {
-        return List.of("mov eax, " + name);
+        return new ArrayList<>(List.of("mov eax, [" + name + "]"));
     }
 }
 
@@ -55,17 +55,15 @@ class BinaryOpNode extends Node {
         switch (op) {
             case "+" -> code.add("add eax, ebx");
             case "-" -> code.add("sub eax, ebx");
-            case "*" -> code.add("mul eax, ebx");
+            case "*" -> code.add("imul eax, ebx");
             case "/" -> {
-                code.add("mov ecx, eax");
-                code.add("div ebx");
-                code.add("mov eax, ecx");
+                code.add("mov edx, 0"); // Clear edx for division
+                code.add("idiv ebx");
             }
             case "mod" -> {
-                code.add("mov ecx, eax");
-                code.add("div ebx");
-                code.add("mul ecx, ebx");
-                code.add("sub eax, ecx");
+                code.add("mov edx, 0"); // Clear edx for division
+                code.add("idiv ebx");
+                code.add("mov eax, edx"); // Move remainder to eax
             }
         }
         return code;
@@ -86,7 +84,7 @@ class LetNode extends Node {
     List<String> generateCode() {
         List<String> code = new ArrayList<>();
         code.addAll(value.generateCode());
-        code.add("mov " + name + ", eax");
+        code.add("mov [" + name + "], eax");
         return code;
     }
 }
@@ -109,10 +107,61 @@ class WhileNode extends Node {
         List<String> code = new ArrayList<>();
         code.add("debut_while_" + label + ":");
         code.addAll(condition.generateCode());
-        code.add("jz sortie_while_" + label);
+        code.add("cmp eax, 0");
+        code.add("je sortie_while_" + label);
         code.addAll(body.generateCode());
         code.add("jmp debut_while_" + label);
         code.add("sortie_while_" + label + ":");
+        return code;
+    }
+}
+
+// Nœud pour une fonction lambda
+class LambdaNode extends Node {
+    String param1, param2;
+    Node body;
+
+    public LambdaNode(String param1, String param2, Node body) {
+        this.param1 = param1;
+        this.param2 = param2;
+        this.body = body;
+    }
+
+    @Override
+    List<String> generateCode() {
+        List<String> code = new ArrayList<>();
+        // Générer le code pour le corps de la lambda
+        code.addAll(body.generateCode());
+        return code;
+    }
+}
+
+// Nœud pour une condition
+class IfNode extends Node {
+    Node condition;
+    Node thenBranch;
+    Node elseBranch;
+    static int labelCount = 0;
+    int label;
+
+    public IfNode(Node condition, Node thenBranch, Node elseBranch) {
+        this.condition = condition;
+        this.thenBranch = thenBranch;
+        this.elseBranch = elseBranch;
+        this.label = labelCount++;
+    }
+
+    @Override
+    List<String> generateCode() {
+        List<String> code = new ArrayList<>();
+        code.addAll(condition.generateCode());
+        code.add("cmp eax, 0");
+        code.add("je else_" + label);
+        code.addAll(thenBranch.generateCode());
+        code.add("jmp end_if_" + label);
+        code.add("else_" + label + ":");
+        code.addAll(elseBranch.generateCode());
+        code.add("end_if_" + label + ":");
         return code;
     }
 }
@@ -129,8 +178,8 @@ public class CodeGenerator {
         // Génération du code
         List<String> exemple1 = new ArrayList<>();
         exemple1.add("DATA SEGMENT");
-        exemple1.add("\tprixHt DD");
-        exemple1.add("\tprixTtc DD");
+        exemple1.add("\tprixHt DD ?");
+        exemple1.add("\tprixTtc DD ?");
         exemple1.add("DATA ENDS");
         exemple1.add("CODE SEGMENT");
         exemple1.addAll(prixHt.generateCode());
@@ -155,9 +204,9 @@ public class CodeGenerator {
         // Génération du code
         List<String> exemple2 = new ArrayList<>();
         exemple2.add("DATA SEGMENT");
-        exemple2.add("\ta DD");
-        exemple2.add("\tb DD");
-        exemple2.add("\taux DD");
+        exemple2.add("\ta DD ?");
+        exemple2.add("\tb DD ?");
+        exemple2.add("\taux DD ?");
         exemple2.add("DATA ENDS");
         exemple2.add("CODE SEGMENT");
         exemple2.addAll(a.generateCode());
@@ -174,17 +223,21 @@ public class CodeGenerator {
         // Exemple 3: PGCD avec fonction lambda (récursive)
         Node x = new LetNode("x", new VariableNode("input"));
         Node y = new LetNode("y", new VariableNode("input"));
-        Node pgcd = new LetNode("pgcd", new BinaryOpNode("lambda", new VariableNode("a"), new VariableNode("b")));
-        pgcd = new LetNode("pgcd", new BinaryOpNode("if", new BinaryOpNode(">", new VariableNode("a"), new NumberNode(0)),
-            new BinaryOpNode("pgcd", new VariableNode("b"), new BinaryOpNode("mod", new VariableNode("a"), new VariableNode("b"))), new VariableNode("a")));
-        Node z = new LetNode("z", new BinaryOpNode("output", new VariableNode("pgcd")));
+        Node pgcdLambda = new LambdaNode("a", "b",
+            new IfNode(
+                new BinaryOpNode("==", new VariableNode("b"), new NumberNode(0)),
+                new VariableNode("a"),
+                new BinaryOpNode("pgcd", new VariableNode("b"), new BinaryOpNode("mod", new VariableNode("a"), new VariableNode("b")))
+            )
+        );
+        Node pgcd = new LetNode("pgcd", pgcdLambda);
+        Node z = new LetNode("z", new BinaryOpNode("pgcd", new VariableNode("x"), new VariableNode("y")));
 
         List<String> exemple3 = new ArrayList<>();
-        
         exemple3.add("DATA SEGMENT");
-        exemple3.add("\tx DD");
-        exemple3.add("\ty DD");
-        exemple3.add("\tpgcd DD");
+        exemple3.add("\tx DD ?");
+        exemple3.add("\ty DD ?");
+        exemple3.add("\tpgcd DD ?");
         exemple3.add("DATA ENDS");
         exemple3.add("CODE SEGMENT");
         exemple3.addAll(x.generateCode());
@@ -196,8 +249,5 @@ public class CodeGenerator {
 
         // Affichage du code généré
         exemple3.forEach(System.out::println);
-
-
-       
     }
 }

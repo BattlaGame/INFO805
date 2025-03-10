@@ -1,0 +1,38 @@
+DATA SEGMENT
+        x DD ?
+        y DD ?
+        pgcd DD ?
+DATA ENDS
+CODE SEGMENT
+    mov eax, [input]
+    mov [x], eax
+    mov eax, [input]
+    mov [y], eax
+    mov eax, [b]
+    push eax
+    mov eax, 0
+    pop ebx
+    cmp eax, 0
+    je else_0
+    mov eax, [a]
+    jmp end_if_0
+    else_0:
+    mov eax, [b]
+    push eax
+    mov eax, [a]
+    push eax
+    mov eax, [b]
+    pop ebx
+    mov edx, 0
+    idiv ebx
+    mov eax, edx
+    pop ebx
+    end_if_0:
+    mov [pgcd], eax
+    mov eax, [x]
+    push eax
+    mov eax, [y]
+    pop ebx
+    mov [z], eax
+    out eax
+CODE ENDS
