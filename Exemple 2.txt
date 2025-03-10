@@ -1,0 +1,40 @@
+DATA SEGMENT
+        a DD
+        b DD
+        aux DD
+DATA ENDS
+CODE SEGMENT
+    mov eax, input
+    mov a, eax
+    mov eax, input
+    mov b, eax
+debut_while_0:
+    mov eax, b
+    push eax
+    mov eax, 0
+    pop ebx
+jz sortie_while_0
+    mov eax, a
+    push eax
+    mov eax, b
+    pop ebx
+    mov ecx, eax
+    div ebx
+    mul ecx, ebx
+    sub eax, ecx
+    mov aux, eax
+    push eax
+    mov eax, b
+    mov a, eax
+    push eax
+    mov eax, aux
+    mov b, eax
+    pop ebx
+    add eax, ebx
+    pop ebx
+    add eax, ebx
+    mov loop_body, eax
+jmp debut_while_0
+sortie_while_0:
+    out eax
+CODE ENDS

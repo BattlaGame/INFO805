@@ -1,0 +1,17 @@
+DATA SEGMENT
+        prixHt DD
+        prixTtc DD
+DATA ENDS
+CODE SEGMENT
+    mov eax, 200
+    mov prixHt, eax
+    mov eax, prixTtc
+    push eax
+    mov eax, 100
+    pop ebx
+    mov ecx, eax
+    div ebx
+    mov eax, ecx
+    mov prixTtc, eax
+    out eax
+CODE ENDS
