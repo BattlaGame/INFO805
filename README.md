@@ -1,6 +1,6 @@
-# Générateur de Code AST
+# TP Compilation : Génération de code pour un sous ensemble du langage λ-ada
 
-Ce projet est un générateur de code qui transforme un arbre syntaxique abstrait (AST) en code assembleur x86. Il est conçu pour illustrer comment des structures de contrôle et des opérations arithmétiques peuvent être représentées et générées à partir d'une structure de données en arbre.
+Ce projet est un générateur de code qui transforme un arbre syntaxique abstrait (AST) en code assembleur.
 
 ## Fonctionnalités
 
@@ -34,23 +34,3 @@ Calcule le Plus Grand Commun Diviseur (PGCD) de deux nombres en utilisant une bo
 ### Exemple 3 : PGCD avec Fonction Lambda Récursive
 
 Calcule le PGCD de manière récursive en utilisant une fonction lambda.
-
-## Comment Utiliser
-
-1. **Cloner le dépôt** :
-   ```bash
-   git clone <URL-du-dépôt>
-   cd nom-du-dépôt
-   ```
-
-2. **Compiler et exécuter** :
-   - Assurez-vous d'avoir Java installé sur votre machine.
-   - Compilez le projet avec `javac` :
-     ```bash
-     javac CodeGenerator.java
-     ```
-   - Exécutez le programme :
-     ```bash
-     java CodeGenerator
-     ```
-
